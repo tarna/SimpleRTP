@@ -1,0 +1,20 @@
+world: "world"
+
+cooldown:
+  rtp: 60
+
+permissions:
+  rtp: "rtp.use"
+  cooldownBypass: "rtp.cooldown.bypass"
+
+messages:
+  no-permission: "&cYou do not have permission to use this command."
+  teleported: "&aYou have been teleported to a location {x}, {z}!"
+  waiting: "&cPlease wait while we find a location for you to teleport to."
+  cooldown: "&aYou must wait &c{time} &aseconds before using this command again."
+
+border:
+  x-min: -1000
+  x-max: 1000
+  z-min: -1000
+  z-max: 1000
