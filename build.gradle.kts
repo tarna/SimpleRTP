@@ -1,5 +1,4 @@
 import net.minecrell.pluginyml.bukkit.BukkitPluginDescription
-import xyz.jpenilla.runpaper.task.RunServer
 
 plugins {
     kotlin("jvm") version "2.0.20"
@@ -11,7 +10,7 @@ plugins {
 }
 
 group = "dev.tarna"
-version = "1.1.0"
+version = "1.2.0"
 
 repositories {
     maven("https://jitpack.io")
@@ -26,15 +25,11 @@ repositories {
 
 dependencies {
     compileOnly("org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT")
+    implementation("org.bstats:bstats-bukkit:3.0.2")
 }
 
 kotlin {
     jvmToolchain(21)
-}
-
-tasks.withType<RunServer> {
-    minecraftVersion("1.21.4")
-    jvmArgs("-DPaper.IgnoreJavaVersion=true", "-Dcom.mojang.eula.agree=true")
 }
 
 bukkit {
@@ -50,5 +45,16 @@ bukkit {
             description = "Randomly teleport to a location"
             aliases = listOf("randomteleport", "randomtp")
         }
+    }
+}
+
+tasks {
+    shadowJar {
+        relocate("org.bstats", "dev.tarna.rtp.bstats")
+    }
+
+    runServer {
+        minecraftVersion("1.21.4")
+        jvmArgs("-DPaper.IgnoreJavaVersion=true", "-Dcom.mojang.eula.agree=true")
     }
 }
