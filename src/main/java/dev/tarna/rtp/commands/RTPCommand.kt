@@ -4,6 +4,7 @@ import dev.tarna.rtp.RTP
 import dev.tarna.rtp.util.CooldownManager
 import dev.tarna.rtp.util.Util
 import dev.tarna.rtp.util.color
+import dev.tarna.rtp.util.send
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.command.Command
@@ -25,21 +26,21 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("Only players can use this command")
+            sender.send("&cOnly players can use this command")
             return true
         }
 
         val permission = plugin.config.getString("permissions.rtp") ?: "rtp.use"
         if (!sender.hasPermission(permission)) {
             val permissionMessage = plugin.config.getString("messages.no-permission") ?: "&cYou do not have permission to use this command"
-            sender.sendMessage(permissionMessage.color())
+            sender.send(permissionMessage)
             return true
         }
 
         val timeLeft = CooldownManager.getRemainingCooldown(sender.uniqueId)
         if (timeLeft.isNegative || timeLeft.isZero) {
             val waitingMessage = plugin.config.getString("messages.waiting") ?: "&aPlease wait while we find a location for you..."
-            sender.sendMessage(waitingMessage.color())
+            sender.send(waitingMessage)
 
             val bypassPermission = plugin.config.getString("permissions.bypass") ?: "rtp.cooldown.bypass"
             if (!sender.hasPermission(bypassPermission)) {
@@ -55,8 +56,11 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
             }
 
             val countdownMessage = plugin.config.getString("messages.countdown") ?: "&aTeleporting in {time} seconds..."
+            val playerLocation = sender.location
+
             object : BukkitRunnable() {
-                var seconds = countdownSeconds
+                private var seconds = countdownSeconds
+                private var cancelOnMove = plugin.config.getBoolean("settings.cancel-on-move")
                 private lateinit var location: Location
 
                 init {
@@ -64,6 +68,12 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
                 }
 
                 override fun run() {
+                    if (cancelOnMove && playerLocation.distanceSquared(sender.location) > 1) {
+                        val cancelMessage = plugin.config.getString("messages.cancel") ?: "&cTeleportation cancelled because you moved"
+                        sender.send(cancelMessage)
+                        cancel()
+                        return
+                    }
                     if (seconds == 0) {
                         teleport(sender, location)
                         cancel()
@@ -72,7 +82,7 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
                     val message = countdownMessage
                         .replace("{time}", seconds.toString())
                         .color()
-                    sender.sendMessage(message)
+                    sender.send(message)
                     seconds--
                 }
             }.runTaskTimer(plugin, 0, 20)
@@ -82,7 +92,7 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
             cooldownMessage = cooldownMessage
                 .replace("{time}", Util.formatTime(timeLeft.seconds))
                 .color()
-            sender.sendMessage(cooldownMessage)
+            sender.send(cooldownMessage)
             return true
         }
     }
@@ -102,7 +112,7 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
             .replace("{world}", location.world?.name ?: "world")
             .replace("{player}", player.name)
             .color()
-        player.sendMessage(message)
+        player.send(message)
     }
 
     private fun getRandomLocation(): Location {
