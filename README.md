@@ -12,6 +12,9 @@ Everything is configurable in the config.yml file. The default config is as foll
 ```yaml
 world: "world"
 
+settings:
+  countdown: 3
+
 cooldown:
   rtp: 60
 
@@ -24,6 +27,7 @@ messages:
   teleported: "&aYou have been teleported to a location {x}, {z}!"
   waiting: "&cPlease wait while we find a location for you to teleport to."
   cooldown: "&aYou must wait &c{time} &aseconds before using this command again."
+  countdown: "&aTeleporting in &c{time} &aseconds..."
 
 border:
   x-min: -1000
