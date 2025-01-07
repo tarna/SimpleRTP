@@ -14,6 +14,7 @@ world: "world"
 
 settings:
   countdown: 3
+  cancel-on-move: true
 
 cooldown:
   rtp: 60
@@ -28,6 +29,7 @@ messages:
   waiting: "&cPlease wait while we find a location for you to teleport to."
   cooldown: "&aYou must wait &c{time} &aseconds before using this command again."
   countdown: "&aTeleporting in &c{time} &aseconds..."
+  cancel: "&cTeleportation cancelled because you moved."
 
 border:
   x-min: -1000
