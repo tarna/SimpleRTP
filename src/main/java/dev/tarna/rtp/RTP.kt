@@ -3,7 +3,6 @@ package dev.tarna.rtp
 import dev.tarna.rtp.commands.RTPCommand
 import dev.tarna.rtp.util.ConfigManager
 import org.bstats.bukkit.Metrics
-import org.bstats.charts.SingleLineChart
 import org.bukkit.plugin.java.JavaPlugin
 
 class RTP : JavaPlugin() {

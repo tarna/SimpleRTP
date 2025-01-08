@@ -8,21 +8,15 @@ import dev.tarna.rtp.util.send
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.command.Command
+import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
-import org.bukkit.command.TabExecutor
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
 import java.time.Duration
+import java.util.UUID
 
-class RTPCommand(val plugin: RTP) : TabExecutor {
-    override fun onTabComplete(
-        sender: CommandSender,
-        command: Command,
-        label: String,
-        args: Array<out String>
-    ): MutableList<String>? {
-        return null
-    }
+class RTPCommand(val plugin: RTP) : CommandExecutor {
+    private val currentlyTeleporting = mutableSetOf<UUID>()
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (sender !is Player) {
@@ -37,16 +31,16 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
             return true
         }
 
+        if (currentlyTeleporting.contains(sender.uniqueId)) {
+            val teleportingMessage = plugin.config.getString("messages.teleporting") ?: "&cYou are already teleporting. Please wait."
+            sender.send(teleportingMessage)
+            return true
+        }
+
         val timeLeft = CooldownManager.getRemainingCooldown(sender.uniqueId)
         if (timeLeft.isNegative || timeLeft.isZero) {
             val waitingMessage = plugin.config.getString("messages.waiting") ?: "&aPlease wait while we find a location for you..."
             sender.send(waitingMessage)
-
-            val bypassPermission = plugin.config.getString("permissions.bypass") ?: "rtp.cooldown.bypass"
-            if (!sender.hasPermission(bypassPermission)) {
-                val cooldown = plugin.config.getLong("cooldown.rtp")
-                CooldownManager.setCooldown(sender.uniqueId, Duration.ofSeconds(cooldown))
-            }
 
             val countdownSeconds = plugin.config.getInt("settings.countdown")
             if (countdownSeconds <= 0) {
@@ -64,6 +58,7 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
                 private lateinit var location: Location
 
                 init {
+                    currentlyTeleporting.add(sender.uniqueId)
                     plugin.server.scheduler.runTaskAsynchronously(plugin, Runnable { location = getRandomLocation() })
                 }
 
@@ -71,6 +66,7 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
                     if (cancelOnMove && playerLocation.distanceSquared(sender.location) > 1) {
                         val cancelMessage = plugin.config.getString("messages.cancel") ?: "&cTeleportation cancelled because you moved"
                         sender.send(cancelMessage)
+                        currentlyTeleporting.remove(sender.uniqueId)
                         cancel()
                         return
                     }
@@ -98,6 +94,13 @@ class RTPCommand(val plugin: RTP) : TabExecutor {
     }
 
     private fun teleport(player: Player, location: Location) {
+        currentlyTeleporting.remove(player.uniqueId)
+        val bypassPermission = plugin.config.getString("permissions.bypass") ?: "rtp.cooldown.bypass"
+        if (!player.hasPermission(bypassPermission)) {
+            val cooldown = plugin.config.getLong("cooldown.rtp")
+            CooldownManager.setCooldown(player.uniqueId, Duration.ofSeconds(cooldown))
+        }
+
         player.teleport(location)
 
         val x = location.x
